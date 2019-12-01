@@ -1,0 +1,6 @@
+---
+# file: database.yml
+- hosts: all
+  tasks:
+    - debug:
+        msg: "System {{ inventory_hostname }} (included in groups {{ group_names }}) has gateway {{ ansible_default_ipv4.gateway }}"
