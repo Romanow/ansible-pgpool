@@ -1,0 +1,3 @@
+---
+# file: inventories/database/vars.yml
+ansible_ssh_user: ansible
