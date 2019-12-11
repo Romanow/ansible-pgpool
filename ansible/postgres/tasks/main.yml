@@ -1,0 +1,105 @@
+---
+# file: roles/database/tasks/main.yml
+- name: Add postgres key
+  become: yes
+  apt_key:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    state: present
+
+- name: Add postgres repository
+  become: yes
+  apt_repository:
+    repo: deb http://apt.postgresql.org/pub/repos/apt/ {{ ansible_distribution_release }}-pgdg main
+    state: present
+
+- name: Install database dependencies
+  become: yes
+  apt:
+    name: ['postgresql-11', 'python3-psycopg2', 'libpq-dev']
+    update_cache: yes
+    state: present
+
+- name: Ensure the PostgreSQL service is running
+  become: yes
+  service:
+    name: postgresql
+    state: started
+    enabled: yes
+
+- name: Configure Postgres
+  become: yes
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: postgres
+    group: postgres
+    mode: 0640
+    backup: yes
+  with_items:
+    - { src: 'roles/postgres/templates/pg_hba.conf.j2', dest: '{{ conf_dir }}/pg_hba.conf' }
+    - { src: 'roles/postgres/templates/postgresql.conf.j2', dest: '{{ conf_dir }}/postgresql.conf' }
+  notify:
+    - restart postgres
+
+- set_fact:
+    master_host: "{{ groups['master'][0] }}"
+
+- set_fact:
+    master_host_ip: "{{ hostvars[master_host].ansible_facts.default_ipv4.address }}"
+
+- debug:
+    msg: "Master host ip {{ master_host_ip }}"
+
+- name: Manage master databae
+  block:
+    - name: Create database
+      postgresql_db:
+        name: "{{ primary_db }}"
+        encoding: 'UTF-8'
+        lc_collate: 'en_US.UTF-8'
+        lc_ctype: 'en_US.UTF-8'
+        template: 'template0'
+        state: present
+
+    - name: Create users
+      postgresql_user:
+        db: "{{ item.database }}"
+        name: "{{ item.user }}"
+        password: "{{ item.password }}"
+        priv: ALL
+        state: present
+      with_items: "{{ db_users }}"
+
+    - name: Create replication user
+      postgresql_user:
+        name: "{{ db_replication.user }}"
+        password: "{{ db_replication.password }}"
+        role_attr_flags: REPLICATION
+        state: present
+  become: yes
+  become_user: postgres
+  when: "'master' in group_names"
+
+- name: Configure slave database
+  block:
+    - name: Remove data directory
+      file:
+        path: "{{ data_dir }}"
+        state: absent
+
+    - name: Fetch data from master
+      shell: export PGPASSWORD="{{ db_replication.password }}" && pg_basebackup -P -R -X stream -c fast -h {{ master_host_ip }}  -U replica -D /var/lib/postgresql/11/main/
+      become_user: postgres
+
+    - name: Create recovery configuration
+      template:
+        src: recovery.conf.j2
+        dest: "{{ data_dir }}/recovery.conf"
+        owner: postgres
+        group: postgres
+        mode: 0640
+      notify:
+        - restart postgres
+
+  become: yes
+  when: "'slave' in group_names"

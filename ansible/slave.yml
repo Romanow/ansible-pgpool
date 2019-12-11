@@ -1,0 +1,5 @@
+---
+# file: slave.yml
+- hosts: "database:&slave"
+  roles:
+    - postgres

@@ -1,0 +1,4 @@
+---
+# file: inventories/group_vars/database.yml
+firewall:
+  - { port: "postgres", direction: "in", policy: "allow", description: "Postgres" }

@@ -1,0 +1,7 @@
+---
+# file: roles/postgres/handlers/main.yml
+- name: restart postgres
+  become: yes
+  service:
+    name: postgresql@11-main
+    state: restarted

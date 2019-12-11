@@ -1,6 +1,6 @@
 ---
 # file: database.yml
-- hosts: all
-  tasks:
-    - debug:
-        msg: "System {{ inventory_hostname }} (included in groups {{ group_names }}) has gateway {{ ansible_default_ipv4.gateway }}"
+- name: Configure Postrges master instance
+  import_playbook: master.yml
+- name: Install and configure PgPool II for balancing and auto recovery
+  import_playbook: pgpool.yml

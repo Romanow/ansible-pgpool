@@ -1,0 +1,13 @@
+---
+# file: roles/firewall/tasks/main.yml
+- name: Configure IPtables
+  become: yes
+  ufw:
+    rule: "{{ item.policy }}"
+    direction: "{{ item.direction }}"
+    port: "{{ item.port }}"
+    comment: "{{ item.description | default ('') }}"
+  with_items:
+    - "{{ firewall }}"
+  notify:
+    - restart ufw
