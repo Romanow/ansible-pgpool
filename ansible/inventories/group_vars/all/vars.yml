@@ -1,5 +1,5 @@
 ---
-# file: inventories/database/vars.yml
+# file: inventories/group_vars/database/vars.yml
 ansible_python_interpreter: "/usr/bin/python3"
 ansible_user: "ansible"
 ansible_ssh_pass: "{{ vault_ansible_pass }}"
