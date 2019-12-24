@@ -1,0 +1,76 @@
+---
+# file: roles/pgpool/tasks/main.yml
+# TODO health check usr
+# TODO logging to file
+- set_fact:
+    slave_hosts: "{{ slave_hosts | default([]) | union([ hostvars[ item ].ansible_facts.default_ipv4.address ]) }}"
+  with_items:
+    - "{{ groups.slave }}"
+
+- debug:
+    msg: "Slave hosts {{ slave_hosts }}"
+
+- name: Add postgres key
+  become: yes
+  apt_key:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    state: present
+
+- name: Add postgres repository
+  become: yes
+  apt_repository:
+    repo: deb http://apt.postgresql.org/pub/repos/apt/ {{ ansible_distribution_release }}-pgdg main
+    state: present
+
+- name: Install PgPool II
+  become: yes
+  apt:
+    name: 'pgpool2'
+    update_cache: yes
+    state: present
+
+- name: Encrypt PCP password
+  command: "pg_md5 {{ vault_pcp_passwd }}"
+  register: pcp_passwd
+
+- name: Configure PCP
+  become: yes
+  template:
+    src: pcp.conf.j2
+    dest: "{{ pgpool_conf_dir }}/pcp.conf"
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+
+- name: Configure host-base authorization
+  become: yes
+  template:
+    src: pool_hba.conf.j2
+    dest: "{{ pgpool_conf_dir }}/pool_hba.conf"
+    mode: 0644
+    owner: root
+    group: root
+    backup: yes
+
+- name: Configure PgPool II
+  become: yes
+  template:
+    src: pgpool.conf.j2
+    dest: "{{ pgpool_conf_dir }}/pgpool.conf"
+    mode: 0640
+    owner: root
+    group: postgres
+    backup: yes
+
+- name: Configure user authorization
+  become: yes
+  command: "pg_md5 --md5auth --username {{ item.user }} {{ item.password }}"
+  with_items:
+    - "{{ db_users }}"
+
+- name: Restart PgPool II
+  become: yes
+  service:
+    name: pgpool2
+    state: restarted

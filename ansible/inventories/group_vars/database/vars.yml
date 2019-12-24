@@ -1,5 +1,6 @@
 ---
-# file: inventories/group_vars/database/vars
+# file: inventories/prod/group_vars/database.yml
+logging_directory: postgresql
 firewall:
   - { port: "postgres", direction: "in", policy: "allow", description: "Postgres" }
 
@@ -17,6 +18,7 @@ db_replication:
   password: "{{ vault_replica_password }}"
   host: "{{ subnet_mask }}"
 
+master_host: "{{ hostvars[ groups.master[0] ].ansible_facts.default_ipv4.address }}"
 subnet_mask: "{{ ansible_default_ipv4.gateway }}/24"
 
 db_storage_type: 'ssd'

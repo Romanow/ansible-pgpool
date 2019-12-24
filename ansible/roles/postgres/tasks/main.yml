@@ -10,6 +10,7 @@
   become: yes
   apt_repository:
     repo: deb http://apt.postgresql.org/pub/repos/apt/ {{ ansible_distribution_release }}-pgdg main
+    update_cache: yes
     state: present
 
 - name: Install database dependencies
@@ -36,19 +37,13 @@
     mode: 0640
     backup: yes
   with_items:
-    - { src: 'roles/postgres/templates/pg_hba.conf.j2', dest: '{{ conf_dir }}/pg_hba.conf' }
-    - { src: 'roles/postgres/templates/postgresql.conf.j2', dest: '{{ conf_dir }}/postgresql.conf' }
+    - { src: 'roles/postgres/templates/pg_hba.conf.j2', dest: '{{ postgres_conf_dir }}/pg_hba.conf' }
+    - { src: 'roles/postgres/templates/postgresql.conf.j2', dest: '{{ postgres_conf_dir }}/postgresql.conf' }
   notify:
     - restart postgres
 
-- set_fact:
-    master_host: "{{ groups['master'][0] }}"
-
-- set_fact:
-    master_host_ip: "{{ hostvars[master_host].ansible_facts.default_ipv4.address }}"
-
 - debug:
-    msg: "Master host ip {{ master_host_ip }}"
+    msg: "Master host ip {{ master_host }}"
 
 - name: Manage master databae
   block:
@@ -84,17 +79,17 @@
   block:
     - name: Remove data directory
       file:
-        path: "{{ data_dir }}"
+        path: "{{ postgres_data_dir }}"
         state: absent
 
     - name: Fetch data from master
-      shell: export PGPASSWORD="{{ db_replication.password }}" && pg_basebackup -P -R -X stream -c fast -h {{ master_host_ip }}  -U replica -D /var/lib/postgresql/11/main/
+      shell: export PGPASSWORD="{{ db_replication.password }}" && pg_basebackup -P -R -X stream -c fast -h {{ master_host }}  -U replica -D {{ postgres_data_dir }}
       become_user: postgres
 
     - name: Create recovery configuration
       template:
         src: recovery.conf.j2
-        dest: "{{ data_dir }}/recovery.conf"
+        dest: "{{ postgres_data_dir }}/recovery.conf"
         owner: postgres
         group: postgres
         mode: 0640
