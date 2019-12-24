@@ -3,11 +3,11 @@ port = {{ database.listen_port }}
 
 timezone = {{ database.timezone }}
 
-data_directory = '{{ data_dir }}'
-hba_file = '{{ conf_dir }}/pg_hba.conf'
-ident_file = '{{ conf_dir }}/pg_ident.conf'
-external_pid_file = '{{ run_dir }}/11-main.pid'
-unix_socket_directories = '{{ run_dir }}'
+data_directory = '{{ postgres_data_dir }}'
+hba_file = '{{ postgres_conf_dir }}/pg_hba.conf'
+ident_file = '{{ postgres_conf_dir }}/pg_ident.conf'
+external_pid_file = '{{ postgres_run_dir }}/11-main.pid'
+unix_socket_directories = '{{ postgres_run_dir }}'
 
 password_encryption = md5
 
@@ -35,7 +35,7 @@ hot_standby_feedback = on
 
 log_destination = 'stderr'
 logging_collector = on
-log_directory = '/var/log/postgresql'
+log_directory = '{{ postgres_log_dir }}'
 log_filename = 'postgresql-%Y-%m-%d.log'
 log_file_mode = 0640
 log_rotation_age = 1d
