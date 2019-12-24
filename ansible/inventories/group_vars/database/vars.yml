@@ -1,5 +1,5 @@
 ---
-# file: inventories/prod/group_vars/database.yml
+# file: inventories/group_vars/database.yml
 logging_directory: postgresql
 firewall:
   - { port: "postgres", direction: "in", policy: "allow", description: "Postgres" }
@@ -18,8 +18,8 @@ db_replication:
   password: "{{ vault_replica_password }}"
   host: "{{ subnet_mask }}"
 
-master_host: "{{ hostvars[ groups.master[0] ].ansible_facts.default_ipv4.address }}"
-subnet_mask: "{{ ansible_default_ipv4.gateway }}/24"
+master_host: "{{ hostvars[ groups.master[0] ].inventory_hostname }}"
+subnet_mask: "{{ inventory_hostname }}/24"
 
 db_storage_type: 'ssd'
 random_page_cost_ssd: 1.1
@@ -30,7 +30,7 @@ max_connections: 100
 shared_buffers: "{{ (ansible_memtotal_mb / 4) | round | int }}"
 database:
   listen_port: 5432
-  listen_address: "localhost, {{ ansible_default_ipv4.address }}"
+  listen_address: "localhost, {{ inventory_hostname }}"
   max_connections: "{{ max_connections }}"
   timezone: "UTC"
   default_statistics_target: 100

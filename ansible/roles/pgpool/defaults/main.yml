@@ -1,5 +1,5 @@
 ---
-## file: roles/pgpool/defaults/main.yml
+# file: roles/pgpool/defaults/main.yml
 pgpool_conf_dir: /etc/pgpool2
 pgpool_run_dir: /var/run/postgresql
 pgpool_log_dir: /var/log/postgresql

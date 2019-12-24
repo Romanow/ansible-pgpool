@@ -3,7 +3,7 @@
 # TODO health check usr
 # TODO logging to file
 - set_fact:
-    slave_hosts: "{{ slave_hosts | default([]) | union([ hostvars[ item ].ansible_facts.default_ipv4.address ]) }}"
+    slave_hosts: "{{ slave_hosts | default([]) | union([ hostvars[ item ].inventory_hostname ]) }}"
   with_items:
     - "{{ groups.slave }}"
 

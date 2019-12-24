@@ -1,5 +1,5 @@
 ---
-# file: inventories/prod/group_vars/pgpool/vars.yml
+# file: inventories/group_vars/pgpool/vars.yml
 pcp_user: admin
 firewall:
   - { port: "5433", direction: "in", policy: "allow", description: "PgPool II" }
